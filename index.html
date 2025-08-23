@@ -37,9 +37,10 @@
     /* subtle patterned backdrop using the logo */
     .bg-tractor {
       background:
-        radial-gradient(1200px 400px at 50% -10%, rgba(21,128,61,.25), transparent 60%),
-        radial-gradient(1200px 500px at 40% 110%, rgba(21,128,61,.15), transparent 60%),
-        url('https://raw.githubusercontent.com/T24085/Team-FT/main/FTlogo.png') center / 70px repeat;
+        linear-gradient(rgba(0,0,0,.65), rgba(0,0,0,.65)),
+        radial-gradient(1200px 400px at 50% -10%, rgba(21,128,61,.22), transparent 60%),
+        radial-gradient(1200px 500px at 40% 110%, rgba(21,128,61,.12), transparent 60%),
+        url('https://raw.githubusercontent.com/T24085/Team-FT/main/FTlogo.png') center / 140px repeat;
     }
     .glass { backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(8,12,10,.7), rgba(8,12,10,.35)); }
     .embed { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 14px; border: 1px solid rgba(212,212,216,.4); background:#000; }
@@ -53,7 +54,7 @@
   <a class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:bg-emerald-700 focus:text-white focus:px-3 focus:py-2 focus:rounded-md" href="#main">Skip to content</a>
 
   <!-- Background -->
-  <div class="fixed inset-0 -z-10 bg-tractor opacity-90"></div>
+  <div class="fixed inset-0 -z-10 bg-tractor opacity-30"></div>
 
   <!-- Header -->
   <header class="sticky top-0 z-40 glass border-b border-zinc-700/50">
@@ -80,8 +81,8 @@
     <!-- HERO -->
     <section id="home" class="reveal py-16 md:py-20">
       <div class="grid md:grid-cols-2 gap-6 items-center">
-        <div>
-          <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">
+        <div class="bg-black/60 border border-zinc-600/60 rounded-xl p-6 backdrop-blur-sm">
+          <h1 class="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg">
             <span class="text-emerald-500">Welcome</span>
             <span class="text-zinc-100">to</span>
             <span class="text-zinc-300">Flying</span>
