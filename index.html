@@ -1,311 +1,249 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- CSP to allow YouTube and Twitch iframes -->
-    <meta http-equiv="Content-Security-Policy" content="frame-src https://player.twitch.tv https://www.youtube.com; default-src 'self'; img-src *; style-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'">
-    <title>Flying Tractors [^T^] - TRIBES 3: Rivals</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom CSS for rural, mechanical design */
-        .glow-text {
-            text-shadow: 0 0 10px rgba(21, 128, 61, 0.8), 0 0 20px rgba(21, 128, 61, 0.6);
-        }
-        .glow-border {
-            box-shadow: 0 0 15px rgba(21, 128, 61, 0.5);
-        }
-        .hover-scale {
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-        .hover-scale:hover {
-            transform: translateY(-5px);
-            opacity: 0.95;
-        }
-        /* Tractor tread pattern background */
-        .gradient-bg {
-            background: linear-gradient(rgba(20, 83, 45, 0.2), rgba(20, 83, 45, 0.2)), url('https://github.com/T24085/Team-FT/blob/main/FTlogo.png?raw=true');
-            background-size: 50px;
-            background-repeat: repeat;
-        }
-        /* Header and footer with gear pattern */
-        .header-footer-bg {
-            background: linear-gradient(rgba(20, 83, 45, 0.9), rgba(20, 83, 45, 0.9)), url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="rgba(212,212,216,0.1)" stroke-width="1"%3E%3Cpath d="M12 2a10 10 0 0 0-10 10 10 10 0 0 0 10 10 10 10 0 0 0 10-10 10 10 0 0 0-10-10zm0 18a8 8 0 0 1-8-8 8 8 0 0 1 8-8 8 8 0 0 1 8 8 8 8 0 0 1-8 8zm-4-8a4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4 4 4 0 0 0-4 4z"/%3E%3C/svg%3E');
-            background-size: 30px;
-        }
-        /* Roster card with metallic texture */
-        .roster-card {
-            background: linear-gradient(rgba(20, 83, 45, 0.8), rgba(20, 83, 45, 0.8)), url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="rgba(21,128,61,0.1)" stroke-width="1"%3E%3Cpath d="M10 10h80v80H10z"/%3E%3Cpath d="M20 20h60v60H20z"/%3E%3C/svg%3E');
-            background-size: 50px;
-            border-radius: 8px;
-            border: 1px solid #D4D4D8;
-        }
-        /* Parallax background styles */
-        .parallax-hero {
-            background-image: url('https://github.com/T24085/Team-FT/blob/main/FTTractor.png?raw=true');
-            background-attachment: fixed;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
-            position: relative;
-            transform: translateY(0);
-            transition: transform 0.5s ease;
-        }
-        .parallax-hero:hover {
-            transform: translateY(-5px);
-        }
-        .parallax-roster {
-            background-image: url('https://github.com/T24085/Team-FT/blob/main/plant.jpg?raw=true');
-            background-attachment: fixed;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
-            position: relative;
-            transform: translateY(0);
-            transition: transform 0.5s ease;
-        }
-        .parallax-roster:hover {
-            transform: translateY(-5px);
-        }
-        /* Overlay for readability */
-        .parallax-overlay {
-            background: rgba(0, 0, 0, 0.6);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        /* Video container */
-        .video-container {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            height: 0;
-            overflow: hidden;
-            max-width: 100%;
-            background: #000;
-            margin-bottom: 2rem;
-            border: 2px solid #D4D4D8;
-            border-radius: 8px;
-        }
-        .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        /* Video grid */
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-            padding: 1rem;
-        }
-        /* Responsive adjustments */
-        @media (max-width: 1000px) {
-            .stream-container {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flying Tractors [^T^] — Tribes 3: Rivals</title>
+  <meta name="description" content="Flying Tractors [^T^] — TRIBES 3: Rivals team. Highlights, streams, roster, and more." />
+  <meta property="og:title" content="Flying Tractors [^T^]" />
+  <meta property="og:description" content="Highlights, streams, roster, and results." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/T24085/Team-FT/main/FTlogo.png" />
+  <meta name="theme-color" content="#166534" />
+
+  <!-- CSP: allow Tailwind CDN, Twitch, and YouTube (nocookie). Adjust if you self-host assets. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; frame-src https://player.twitch.tv https://www.youtube-nocookie.com https://www.youtube.com; style-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              green: '#166534',
+              green2: '#15803d',
+              metal: '#d4d4d8',
+              dark: '#0b0f14',
             }
-            .video-grid {
-                grid-template-columns: 1fr;
-            }
+          },
+          boxShadow: { card: '0 14px 40px rgba(0,0,0,.35)' },
+          borderRadius: { xl2: '1.25rem' }
         }
-    </style>
+      }
+    }
+  </script>
+  <style>
+    /* subtle patterned backdrop using the logo */
+    .bg-tractor {
+      background:
+        radial-gradient(1200px 400px at 50% -10%, rgba(21,128,61,.25), transparent 60%),
+        radial-gradient(1200px 500px at 40% 110%, rgba(21,128,61,.15), transparent 60%),
+        url('https://raw.githubusercontent.com/T24085/Team-FT/main/FTlogo.png') center / 70px repeat;
+    }
+    .glass { backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(8,12,10,.7), rgba(8,12,10,.35)); }
+    .embed { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 14px; border: 1px solid rgba(212,212,216,.4); background:#000; }
+    .embed iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+    .reveal { opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce){ .reveal{opacity:1; transform:none} }
+  </style>
 </head>
-<body class="gradient-bg text-gray-100 font-sans">
-    <!-- Header Section -->
-    <header class="header-footer-bg p-6 sticky top-0 z-10">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center">
-                <!-- Team Logo -->
-                <img src="https://github.com/T24085/Team-FT/blob/main/FTlogo.png?raw=true" alt="Flying Tractors [^T^] Logo" class="w-16 h-16 rounded-full border-2 border-gray-400">
-                <h1 class="ml-4 text-3xl font-extrabold glow-text">Flying Tractors [^T^]</h1>
-            </div>
-            <nav>
-                <ul class="flex space-x-6">
-                    <li><a href="#home" class="text-gray-100 hover:text-green-300 transition">Home</a></li>
-                    <li><a href="#featured-videos" class="text-gray-100 hover:text-green-300 transition">Featured Videos</a></li>
-                    <li><a href="#streams" class="text-gray-100 hover:text-green-300 transition">Streams</a></li>
-                    <li><a href="#roster" class="text-gray-100 hover:text-green-300 transition">Roster</a></li>
-                    <li><a href="#about" class="text-gray-100 hover:text-green-300 transition">About</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+<body class="bg-brand-dark text-zinc-100 min-h-screen selection:bg-emerald-700/40 selection:text-white">
+  <a class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:bg-emerald-700 focus:text-white focus:px-3 focus:py-2 focus:rounded-md" href="#main">Skip to content</a>
 
-    <!-- Hero Section with Parallax Background -->
-    <section id="home" class="parallax-hero py-20 text-center relative">
-        <div class="parallax-overlay"></div>
-        <div class="container mx-auto px-4 relative z-10">
-            <h2 class="text-5xl font-extrabold mb-4 glow-text">
-                <span class="text-green-700">Welcome</span>
-                <span class="text-gray-100">to</span>
-                <span class="text-gray-400">Flying</span>
-                <span class="text-green-700">Tractors!</span>
-            </h2>
-            <p class="text-xl mb-8 text-gray-100">Plowing through the Wilderzone of TRIBES 3: Rivals with mechanical might and relentless drive, led by Captain Playb0x.</p>
-            <a href="https://store.steampowered.com/app/2687970/TRIBES_3_Rivals/" target="_blank" class="bg-green-700 hover:bg-green-600 text-gray-100 font-bold py-3 px-6 rounded-lg border-2 border-gray-400 hover-scale">Play TRIBES 3: Rivals</a>
+  <!-- Background -->
+  <div class="fixed inset-0 -z-10 bg-tractor opacity-90"></div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 glass border-b border-zinc-700/50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+      <a href="#home" class="flex items-center gap-3">
+        <img class="w-12 h-12 rounded-xl border border-brand-metal/60" src="https://raw.githubusercontent.com/T24085/Team-FT/main/FTlogo.png" alt="Flying Tractors logo" />
+        <div class="font-extrabold tracking-tight">Flying Tractors <span class="text-emerald-400">[^T^]</span></div>
+      </a>
+
+      <button class="ml-auto md:hidden border border-zinc-600/60 rounded-lg px-3 py-1.5" aria-controls="site-nav" aria-expanded="false" id="navToggle">Menu</button>
+      <nav id="site-nav" class="hidden md:block md:ml-auto" aria-label="Primary">
+        <ul class="flex items-center gap-4 text-zinc-300 font-semibold">
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20 aria-[current=true]:bg-emerald-700/30" href="#home">Home</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#videos">Featured Videos</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#streams">Streams</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#roster">Roster</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="max-w-6xl mx-auto px-4">
+    <!-- HERO -->
+    <section id="home" class="reveal py-16 md:py-20">
+      <div class="grid md:grid-cols-2 gap-6 items-center">
+        <div>
+          <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">
+            <span class="text-emerald-500">Welcome</span>
+            <span class="text-zinc-100">to</span>
+            <span class="text-zinc-300">Flying</span>
+            <span class="text-emerald-500">Tractors</span>
+          </h1>
+          <p class="mt-3 text-lg text-zinc-200/90">Plowing through the Wilderzone of <em>TRIBES 3: Rivals</em> with mechanical might and relentless drive, led by Captain <strong>Playb0x</strong>.</p>
+          <div class="mt-5 flex gap-3 flex-wrap">
+            <a href="https://store.steampowered.com/app/2687970/TRIBES_3_Rivals/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-5 py-3 rounded-xl border border-brand-metal/60 shadow-card">Play Tribes 3: Rivals</a>
+            <a href="#videos" class="inline-flex items-center gap-2 border border-zinc-600/70 hover:bg-white/5 px-5 py-3 rounded-xl">Watch Highlights</a>
+          </div>
         </div>
+        <div class="rounded-xl overflow-hidden border border-zinc-600/60 shadow-card">
+          <img class="w-full h-full object-cover" src="https://raw.githubusercontent.com/T24085/Team-FT/main/FTTractor.png" alt="Flying Tractors hero art" />
+        </div>
+      </div>
     </section>
 
-    <!-- Featured Videos Section -->
-    <section id="featured-videos" class="py-16 bg-gray-800 bg-opacity-80">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-extrabold text-center mb-12 glow-text">
-                <span class="text-gray-100">Featured</span>
-                <span class="text-gray-400">Videos</span>
-            </h2>
-            <div class="video-grid">
-                <div class="video-container">
-                    <iframe src="https://www.youtube.com/embed/KECIGdkH0Sg?start=11" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-                <div class="video-container">
-                    <iframe src="https://www.youtube.com/embed/zNovTE56lNQ?start=471" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-                <div class="video-container">
-                    <iframe src="https://www.youtube.com/embed/Lj1ByqBFGio" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-            </div>
-        </div>
+    <!-- VIDEOS -->
+    <section id="videos" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-8">
+      <header class="flex items-end justify-between flex-wrap gap-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold">Featured Videos</h2>
+        <p class="text-zinc-300">A few of our favorite moments.</p>
+      </header>
+      <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+        <div class="embed"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/KECIGdkH0Sg?start=11" title="Featured video 1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+        <div class="embed"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/zNovTE56lNQ?start=471" title="Featured video 2" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+        <div class="embed"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/Lj1ByqBFGio" title="Featured video 3" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+      </div>
     </section>
 
-    <!-- Streams Section -->
-    <section id="streams" class="py-16 bg-gray-800 bg-opacity-80">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-extrabold text-center mb-12 glow-text">
-                <span class="text-green-700">Team</span>
-                <span class="text-gray-100">Streams</span>
-            </h2>
-            <div class="stream-container">
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Mikeax2</h3>
-                    <a href="https://www.twitch.tv/mikeax2" target="_blank" class="text-green-300 hover:text-green-200">twitch.tv/mikeax2</a>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">nato</h3>
-                    <a href="https://www.twitch.tv/natopotato262" target="_blank" class="text-green-300 hover:text-green-200">twitch.tv/natopotato262</a>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Playb0x</h3>
-                    <a href="https://www.twitch.tv/playb0x" target="_blank" class="text-green-300 hover:text-green-200">twitch.tv/playb0x</a>
-                </div>
-            </div>
-        </div>
+    <!-- STREAMS -->
+    <section id="streams" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-8">
+      <header class="flex items-end justify-between flex-wrap gap-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold">Team Streams</h2>
+        <p class="text-zinc-300">Click a card to open Twitch in a new tab, or play inline below.</p>
+      </header>
+
+      <!-- Inline, lightweight stream players (auto-parent) -->
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <!-- Mikeax2 -->
+        <article class="border border-zinc-700/60 rounded-xl p-4 hover:bg-white/5 transition">
+          <h3 class="font-semibold">Mikeax2</h3>
+          <a class="text-emerald-400 hover:underline" href="https://www.twitch.tv/mikeax2" target="_blank" rel="noopener noreferrer">twitch.tv/mikeax2</a>
+          <div class="embed mt-3"><iframe loading="lazy" data-twitch-channel="mikeax2" title="Mikeax2 — Twitch player" allowfullscreen></iframe></div>
+        </article>
+        <!-- nato -->
+        <article class="border border-zinc-700/60 rounded-xl p-4 hover:bg-white/5 transition">
+          <h3 class="font-semibold">nato</h3>
+          <a class="text-emerald-400 hover:underline" href="https://www.twitch.tv/natopotato262" target="_blank" rel="noopener noreferrer">twitch.tv/natopotato262</a>
+          <div class="embed mt-3"><iframe loading="lazy" data-twitch-channel="natopotato262" title="nato — Twitch player" allowfullscreen></iframe></div>
+        </article>
+        <!-- Playb0x -->
+        <article class="border border-zinc-700/60 rounded-xl p-4 hover:bg-white/5 transition">
+          <h3 class="font-semibold">Playb0x</h3>
+          <a class="text-emerald-400 hover:underline" href="https://www.twitch.tv/playb0x" target="_blank" rel="noopener noreferrer">twitch.tv/playb0x</a>
+          <div class="embed mt-3"><iframe loading="lazy" data-twitch-channel="playb0x" title="Playb0x — Twitch player" allowfullscreen></iframe></div>
+        </article>
+      </div>
     </section>
 
-    <!-- Roster Section with Parallax Background -->
-    <section id="roster" class="parallax-roster py-16 relative">
-        <div class="parallax-overlay"></div>
-        <div class="container mx-auto px-4 relative z-10">
-            <h2 class="text-4xl font-extrabold text-center mb-12 glow-text">
-                <span class="text-gray-400">Team</span>
-                <span class="text-green-700">Roster</span>
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Captain -->
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Playb0x</h3>
-                    <p class="text-green-300">Captain</p>
-                    <a href="https://www.twitch.tv/playb0x" target="_blank" class="text-green-300 hover:text-green-200">twitch.tv/playb0x</a>
-                </div>
-                <!-- Core Members -->
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Bizow</h3>
-                    <p class="text-green-300">Core Member</p>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Zao</h3>
-                    <p class="text-green-300">Core Member</p>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Dreadtitan</h3>
-                    <p class="text-green-300">Core Member</p>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">nato</h3>
-                    <p class="text-green-300">Core Member</p>
-                    <a href="https://www.twitch.tv/natopotato262" target="_blank" class="text-green-300 hover:text-green-200">twitch.tv/natopotato262</a>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">LightningMcMeme</h3>
-                    <p class="text-green-300">Core Member</p>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Orvid</h3>
-                    <p class="text-green-300">Core Member</p>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Bazz-B</h3>
-                    <p class="text-green-300">Core Member</p>
-                </div>
-                <div class="roster-card p-6 glow-border hover-scale">
-                    <h3 class="text-xl font-semibold text-gray-100">Mikeax2</h3>
-                    <p class="text-green-300">Core Member</p>
-                    <a href="https://www.twitch.tv/mikeax2" target="_blank" class="text-green-300 hover:text-green-200">twitch.tv/mikeax2</a>
-                </div>
-            </div>
-        </div>
+    <!-- ROSTER -->
+    <section id="roster" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-8">
+      <header class="flex items-end justify-between flex-wrap gap-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold">Team Roster</h2>
+        <p class="text-zinc-300">Core lineup and roles.</p>
+      </header>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <article class="border border-zinc-700/60 rounded-xl p-4">
+          <h3 class="text-lg font-semibold">Playb0x</h3>
+          <p class="text-emerald-400">Captain</p>
+          <a class="text-emerald-400 hover:underline" href="https://www.twitch.tv/playb0x" target="_blank" rel="noopener noreferrer">twitch.tv/playb0x</a>
+        </article>
+        <article class="border border-zinc-700/60 rounded-xl p-4"><h3 class="text-lg font-semibold">Bizow</h3><p class="text-emerald-400">Core Member</p></article>
+        <article class="border border-zinc-700/60 rounded-xl p-4"><h3 class="text-lg font-semibold">Zao</h3><p class="text-emerald-400">Core Member</p></article>
+        <article class="border border-zinc-700/60 rounded-xl p-4"><h3 class="text-lg font-semibold">Dreadtitan</h3><p class="text-emerald-400">Core Member</p></article>
+        <article class="border border-zinc-700/60 rounded-xl p-4"><h3 class="text-lg font-semibold">nato</h3><p class="text-emerald-400">Core Member</p><a class="text-emerald-400 hover:underline" href="https://www.twitch.tv/natopotato262" target="_blank" rel="noopener noreferrer">twitch.tv/natopotato262</a></article>
+        <article class="border border-zinc-700/60 rounded-xl p-4"><h3 class="text-lg font-semibold">LightningMcMeme</h3><p class="text-emerald-400">Core Member</p></article>
+        <article class="border border-zinc-700/60 rounded-xl p-4"><h3 class="text-lg font-semibold">Orvid</h3><p class="text-emerald-400">Core Member</p></article>
+        <article class="border border-zinc-700/60 rounded-xl p-4"><h3 class="text-lg font-semibold">Bazz-B</h3><p class="text-emerald-400">Core Member</p></article>
+        <article class="border border-zinc-700/60 rounded-xl p-4"><h3 class="text-lg font-semibold">Mikeax2</h3><p class="text-emerald-400">Core Member</p><a class="text-emerald-400 hover:underline" href="https://www.twitch.tv/mikeax2" target="_blank" rel="noopener noreferrer">twitch.tv/mikeax2</a></article>
+      </div>
     </section>
 
-    <!-- About Section -->
-    <section id="about" class="py-16 bg-gray-800 bg-opacity-80">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-4xl font-extrabold mb-8 glow-text">
-                <span class="text-gray-100">About</span>
-                <span class="text-gray-400">Flying</span>
-                <span class="text-green-700">Tractors!</span>
-            </h2>
-            <p class="text-lg mb-4 text-gray-100">Flying Tractors [^T^] is a relentless competitive team in *TRIBES 3: Rivals*, plowing through the Wilderzone with mechanical might and high-octane aggression. Led by Captain Playb0x, the team combines rugged power and strategic precision to dominate the battlefield.</p>
-            <p class="text-lg text-gray-100">Join us on Twitch to witness the unstoppable force of Flying Tractors!</p>
-        </div>
+    <!-- ABOUT -->
+    <section id="about" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-14">
+      <h2 class="text-2xl md:text-3xl font-extrabold">About Flying Tractors</h2>
+      <p class="mt-2 text-zinc-200/90">Flying Tractors [^T^] is a relentless competitive team in <em>TRIBES 3: Rivals</em>, combining rugged power and strategic precision to dominate the battlefield. Led by Captain Playb0x, we plow through the Wilderzone with high‑octane aggression.</p>
     </section>
+  </main>
 
-    <!-- Footer -->
-    <footer class="header-footer-bg py-6">
-        <div class="container mx-auto px-4 text-center">
-            <p class="text-gray-100">© 2025 Flying Tractors [^T^]. All rights reserved.</p>
-            <p>Follow us on <a href="https://x.com/FlyingTractors" target="_blank" class="text-green-300 hover:text-green-200">@FlyingTractors</a></p>
-        </div>
-    </footer>
+  <footer class="glass border-t border-zinc-700/50">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-center">
+      <p>© 2025 Flying Tractors [^T^]. All rights reserved.</p>
+      <p class="mt-1">Follow us on <a class="text-emerald-400 hover:underline" href="https://x.com/FlyingTractors" target="_blank" rel="noopener noreferrer">@FlyingTractors</a></p>
+    </div>
+  </footer>
+
+  <a href="#home" aria-label="Back to top" class="fixed right-4 bottom-4 hidden items-center justify-center w-11 h-11 rounded-full border border-zinc-600/60 bg-black/40 hover:bg-black/60 shadow-card" id="toTop">↑</a>
+
+  <script>
+    // Mobile nav
+    (function(){
+      const btn = document.getElementById('navToggle');
+      const nav = document.getElementById('site-nav');
+      if(!btn || !nav) return;
+      btn.addEventListener('click', ()=>{
+        const open = nav.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', String(!open));
+      });
+    })();
+
+    // Smooth scroll & simple scrollspy
+    (function(){
+      document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', e=>{
+          const id = a.getAttribute('href');
+          const el = document.querySelector(id);
+          if(!el) return;
+          e.preventDefault();
+          el.scrollIntoView({behavior:'smooth', block:'start'});
+        });
+      });
+      const sections = document.querySelectorAll('main section[id]');
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(entry=>{
+          const id = entry.target.id;
+          const link = document.querySelector(`header a[href="#${id}"]`);
+          if(link) link.setAttribute('aria-current', entry.isIntersecting ? 'true' : 'false');
+        });
+      }, { rootMargin: '-40% 0px -55% 0px', threshold: 0.05 });
+      sections.forEach(s=>io.observe(s));
+    })();
+
+    // Reveal on scroll
+    (function(){
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(prefersReduced) return;
+      const els = document.querySelectorAll('.reveal');
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+      }, {threshold: .1});
+      els.forEach(el=>io.observe(el));
+    })();
+
+    // Back to top visibility
+    (function(){
+      const btn = document.getElementById('toTop');
+      const onScroll = ()=>{ if(window.scrollY > 600) btn.classList.remove('hidden'); else btn.classList.add('hidden'); };
+      document.addEventListener('scroll', onScroll, {passive:true});
+      onScroll();
+    })();
+
+    // Twitch embeds — set parent to current domain at runtime
+    (function(){
+      const domain = location.hostname || 'localhost';
+      document.querySelectorAll('iframe[data-twitch-channel]').forEach((iframe)=>{
+        const channel = iframe.getAttribute('data-twitch-channel');
+        if(!channel) return;
+        const params = new URLSearchParams({ channel, parent: domain, muted: 'true' });
+        iframe.src = `https://player.twitch.tv/?${params.toString()}`;
+      });
+    })();
+  </script>
 </body>
 </html>
