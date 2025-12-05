@@ -42,6 +42,7 @@
       await loadVideos();
       await loadStreams();
       await loadRoster();
+      await loadStats();
     }
 
     async function loadVideos() {
@@ -252,6 +253,119 @@
         alert('Error deleting member: ' + error.message);
       }
     };
+
+    async function loadStats() {
+      const statsContainer = document.getElementById('statsList');
+      statsContainer.innerHTML = '<p class="text-zinc-400">Loading...</p>';
+      
+      try {
+        const q = query(collection(db, 'teamPlayerStats'), orderBy('name', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          statsContainer.innerHTML = '<p class="text-zinc-400">No stats yet. Add one below.</p>';
+          return;
+        }
+        
+        statsContainer.innerHTML = '';
+        snapshot.forEach((docSnap) => {
+          const stat = docSnap.data();
+          const kills = stat.kills || 0;
+          const deaths = stat.deaths || 0;
+          const kd = deaths > 0 ? (kills / deaths).toFixed(2) : kills > 0 ? kills.toFixed(2) : '0.00';
+          const wins = stat.wins || 0;
+          const losses = stat.losses || 0;
+          const totalGames = wins + losses;
+          const winPercent = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : '0.0';
+          
+          const statDiv = document.createElement('div');
+          statDiv.className = 'border border-zinc-700/60 rounded-lg p-4';
+          statDiv.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex-1 grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
+                <div><span class="text-zinc-400">Player:</span> <span class="font-semibold">${stat.name}</span></div>
+                <div><span class="text-zinc-400">Kills:</span> ${kills}</div>
+                <div><span class="text-zinc-400">Deaths:</span> ${deaths}</div>
+                <div><span class="text-zinc-400">K/D:</span> <span class="text-emerald-400">${kd}</span></div>
+                <div><span class="text-zinc-400">Wins:</span> <span class="text-emerald-400">${wins}</span></div>
+                <div><span class="text-zinc-400">Losses:</span> <span class="text-red-400">${losses}</span></div>
+              </div>
+              <div class="flex gap-2 ml-4">
+                <button onclick="editStat('${docSnap.id}', '${stat.name}', ${kills}, ${deaths}, ${wins}, ${losses})" class="text-blue-400 hover:text-blue-300 text-sm">Edit</button>
+                <button onclick="deleteStat('${docSnap.id}')" class="text-red-400 hover:text-red-300 text-sm">Delete</button>
+              </div>
+            </div>
+          `;
+          statsContainer.appendChild(statDiv);
+        });
+      } catch (error) {
+        statsContainer.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+      }
+    }
+
+    window.editStat = function(id, name, kills, deaths, wins, losses) {
+      document.getElementById('statPlayerName').value = name;
+      document.getElementById('statKills').value = kills;
+      document.getElementById('statDeaths').value = deaths;
+      document.getElementById('statWins').value = wins;
+      document.getElementById('statLosses').value = losses;
+      document.getElementById('statEditId').value = id;
+      document.getElementById('statSubmitBtn').textContent = 'Update';
+      document.getElementById('statPlayerName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    window.addOrUpdateStat = async function() {
+      const name = document.getElementById('statPlayerName').value;
+      const kills = parseInt(document.getElementById('statKills').value) || 0;
+      const deaths = parseInt(document.getElementById('statDeaths').value) || 0;
+      const wins = parseInt(document.getElementById('statWins').value) || 0;
+      const losses = parseInt(document.getElementById('statLosses').value) || 0;
+      const editId = document.getElementById('statEditId').value;
+      
+      if (!name) {
+        alert('Please enter a player name');
+        return;
+      }
+      
+      try {
+        const statData = {
+          name: name,
+          kills: kills,
+          deaths: deaths,
+          wins: wins,
+          losses: losses
+        };
+        
+        if (editId) {
+          await updateDoc(doc(db, 'teamPlayerStats', editId), statData);
+        } else {
+          await addDoc(collection(db, 'teamPlayerStats'), statData);
+        }
+        
+        // Reset form
+        document.getElementById('statPlayerName').value = '';
+        document.getElementById('statKills').value = '';
+        document.getElementById('statDeaths').value = '';
+        document.getElementById('statWins').value = '';
+        document.getElementById('statLosses').value = '';
+        document.getElementById('statEditId').value = '';
+        document.getElementById('statSubmitBtn').textContent = 'Add';
+        
+        await loadStats();
+      } catch (error) {
+        alert('Error saving stats: ' + error.message);
+      }
+    };
+
+    window.deleteStat = async function(id) {
+      if (!confirm('Delete these stats?')) return;
+      try {
+        await deleteDoc(doc(db, 'teamPlayerStats', id));
+        await loadStats();
+      } catch (error) {
+        alert('Error deleting stats: ' + error.message);
+      }
+    };
   </script>
   <style>
     .glass { backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(8,12,10,.7), rgba(8,12,10,.35)); }
@@ -320,6 +434,27 @@
           <input type="text" id="memberTwitchUrl" placeholder="Twitch URL (optional)" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
           <button onclick="window.addMember()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 rounded-lg">Add</button>
         </div>
+      </div>
+    </section>
+
+    <!-- Player Stats Section -->
+    <section class="glass border border-zinc-700/50 rounded-xl p-6 mb-8">
+      <h2 class="text-2xl font-extrabold mb-4">Player Statistics</h2>
+      
+      <div id="statsList" class="mb-4 space-y-2"></div>
+      
+      <div class="border-t border-zinc-700/50 pt-4 mt-4">
+        <h3 class="font-semibold mb-3">Add/Update Player Stats</h3>
+        <div class="grid md:grid-cols-7 gap-3">
+          <input type="text" id="statPlayerName" placeholder="Player Name" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="number" id="statKills" placeholder="Kills" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="number" id="statDeaths" placeholder="Deaths" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="number" id="statWins" placeholder="Wins" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="number" id="statLosses" placeholder="Losses" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="hidden" id="statEditId" />
+          <button onclick="window.addOrUpdateStat()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 rounded-lg" id="statSubmitBtn">Add</button>
+        </div>
+        <p class="text-sm text-zinc-400 mt-2">K/D ratio and Win % will be calculated automatically</p>
       </div>
     </section>
   </main>

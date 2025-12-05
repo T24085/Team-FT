@@ -11,8 +11,9 @@
   <meta property="og:image" content="https://raw.githubusercontent.com/T24085/Team-FT/main/FTlogo.png" />
   <meta name="theme-color" content="#166534" />
 
-  <!-- CSP: allow Tailwind CDN, Twitch, YouTube, and Firebase. Adjust if you self-host assets. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; frame-src https://player.twitch.tv https://www.youtube-nocookie.com https://www.youtube.com; style-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com https://www.gstatic.com 'unsafe-inline' 'unsafe-eval'; connect-src https://*.firebaseio.com https://*.googleapis.com">
+  <!-- CSP: allow Tailwind CDN, Twitch, YouTube, Firebase, and Chart.js. Adjust if you self-host assets. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; frame-src https://player.twitch.tv https://www.youtube-nocookie.com https://www.youtube.com; style-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com https://www.gstatic.com https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; connect-src https://*.firebaseio.com https://*.googleapis.com">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -55,7 +56,9 @@
       object-fit: cover;
       opacity: 0.9;
     }
-    .glass { backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(8,12,10,.7), rgba(8,12,10,.35)); }
+    .glass { backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(8,12,10,.85), rgba(8,12,10,.7)); }
+    .bg-black\/25 { background-color: rgba(0, 0, 0, 0.75) !important; }
+    .bg-black\/60 { background-color: rgba(0, 0, 0, 0.85) !important; }
     .embed { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 14px; border: 1px solid rgba(212,212,216,.4); background:#000; }
     .embed iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
     .reveal { opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
@@ -96,6 +99,7 @@
           <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#videos">Featured Videos</a></li>
           <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#streams">Streams</a></li>
           <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#roster">Roster</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#stats">Stats</a></li>
           <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#about">About</a></li>
           <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20 text-emerald-400" href="login.html">Admin</a></li>
         </ul>
@@ -163,6 +167,18 @@
       <div id="rosterContainer" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         <!-- Roster will be loaded dynamically from Firestore -->
         <div class="col-span-full text-center text-zinc-400 py-8">Loading roster...</div>
+      </div>
+    </section>
+
+    <!-- PLAYER STATS -->
+    <section id="stats" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-8">
+      <header class="flex items-end justify-between flex-wrap gap-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold">Player Statistics</h2>
+        <p class="text-zinc-300">Team performance metrics.</p>
+      </header>
+      <div id="statsContainer" class="mt-4">
+        <!-- Stats will be loaded dynamically from Firestore -->
+        <div class="text-center text-zinc-400 py-8">Loading stats...</div>
       </div>
     </section>
 
@@ -251,7 +267,7 @@
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -337,34 +353,298 @@
       }
     }
 
-    // Load Team Roster
+    // Load Team Roster - merge stats data with admin-managed roster data
     async function loadRoster() {
       const container = document.getElementById('rosterContainer');
       
       try {
-        const q = query(collection(db, 'teamRoster'), orderBy('name', 'asc'));
-        const snapshot = await getDocs(q);
+        // Get players from stats
+        const statsDocRef = doc(db, 'publicStats', 'aggregates');
+        const statsDocSnap = await getDoc(statsDocRef);
         
-        if (snapshot.empty) {
+        // Get admin-managed roster data
+        const rosterQuery = query(collection(db, 'teamRoster'), orderBy('name', 'asc'));
+        const rosterSnapshot = await getDocs(rosterQuery);
+        
+        // Build map of admin-managed roster data
+        const adminRosterMap = new Map();
+        rosterSnapshot.forEach((doc) => {
+          const member = doc.data();
+          adminRosterMap.set(member.name.toLowerCase(), member);
+        });
+        
+        // Get players from stats
+        let playersFromStats = [];
+        if (statsDocSnap.exists()) {
+          const data = statsDocSnap.data() || {};
+          const playerTotals = data.playerTotals || [];
+          
+          // Filter players by Flying Tractors team
+          const teamNames = ['Flying Tractors', 'Flying Tractors [^T^]', 'FT', '[^T^]'];
+          playersFromStats = playerTotals.filter(player => {
+            const teams = Array.isArray(player.teams) ? player.teams : (player.team ? [player.team] : []);
+            return teams.some(team => teamNames.some(name => 
+              team && (team.includes(name) || name.includes(team))
+            ));
+          }).map(p => p.name);
+        }
+        
+        // Merge: combine stats players with admin roster
+        const allPlayerNames = new Set([
+          ...playersFromStats,
+          ...Array.from(adminRosterMap.keys())
+        ]);
+        
+        if (allPlayerNames.size === 0) {
           container.innerHTML = '<div class="col-span-full text-center text-zinc-400 py-8">No roster members available.</div>';
           return;
         }
         
+        // Create merged roster entries
+        const mergedRoster = Array.from(allPlayerNames).map(playerName => {
+          const adminData = adminRosterMap.get(playerName.toLowerCase());
+          return {
+            name: adminData?.name || playerName,
+            role: adminData?.role || 'Core Member',
+            twitchUrl: adminData?.twitchUrl || ''
+          };
+        }).sort((a, b) => {
+          // Sort by role (Captain first), then by name
+          if (a.role === 'Captain' && b.role !== 'Captain') return -1;
+          if (a.role !== 'Captain' && b.role === 'Captain') return 1;
+          return a.name.localeCompare(b.name);
+        });
+        
         container.innerHTML = '';
-        snapshot.forEach((doc) => {
-          const member = doc.data();
+        mergedRoster.forEach((member) => {
           const memberDiv = document.createElement('article');
-          memberDiv.className = 'border border-zinc-700/60 rounded-xl p-4';
+          memberDiv.className = 'border border-zinc-700/60 rounded-xl p-4 bg-black/60';
           memberDiv.innerHTML = `
             <h3 class="text-lg font-semibold">${member.name}</h3>
             <p class="text-emerald-400">${member.role}</p>
-            ${member.twitchUrl ? `<a class="text-emerald-400 hover:underline" href="${member.twitchUrl}" target="_blank" rel="noopener noreferrer">${member.twitchUrl.replace('https://', '').replace('http://', '')}</a>` : ''}
+            ${member.twitchUrl ? `<a class="text-emerald-400 hover:underline text-sm" href="${member.twitchUrl}" target="_blank" rel="noopener noreferrer">${member.twitchUrl.replace('https://', '').replace('http://', '')}</a>` : ''}
           `;
           container.appendChild(memberDiv);
         });
       } catch (error) {
         console.error('Error loading roster:', error);
         container.innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Error loading roster.</div>';
+      }
+    }
+
+    // Load Player Stats from publicStats/aggregates
+    async function loadPlayerStats() {
+      const container = document.getElementById('statsContainer');
+      
+      try {
+        const docRef = doc(db, 'publicStats', 'aggregates');
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) {
+          container.innerHTML = '<div class="text-center text-zinc-400 py-8">No player stats available. Stats will appear here once matches are recorded.</div>';
+          return;
+        }
+        
+        const data = docSnap.data() || {};
+        const playerTotals = data.playerTotals || [];
+        
+        // Filter players by Flying Tractors team
+        const teamNames = ['Flying Tractors', 'Flying Tractors [^T^]', 'FT', '[^T^]'];
+        const flyingTractorsPlayers = playerTotals.filter(player => {
+          const teams = Array.isArray(player.teams) ? player.teams : (player.team ? [player.team] : []);
+          return teams.some(team => teamNames.some(name => 
+            team && (team.includes(name) || name.includes(team))
+          ));
+        });
+        
+        if (flyingTractorsPlayers.length === 0) {
+          container.innerHTML = '<div class="text-center text-zinc-400 py-8">No Flying Tractors player stats found. Stats will appear here once matches are recorded.</div>';
+          return;
+        }
+        
+        // Sort by kills descending
+        flyingTractorsPlayers.sort((a, b) => (b.kills || 0) - (a.kills || 0));
+        
+        // Prepare data for charts
+        const playerNames = flyingTractorsPlayers.map(p => p.name || 'Unknown');
+        const killsData = flyingTractorsPlayers.map(p => p.kills || 0);
+        const assistsData = flyingTractorsPlayers.map(p => p.assists || 0);
+        const kpmData = flyingTractorsPlayers.map(p => {
+          const time = p.time || 0;
+          return time > 0 ? parseFloat(((p.kills || 0) / time).toFixed(2)) : 0;
+        });
+        const spmData = flyingTractorsPlayers.map(p => {
+          const time = p.time || 0;
+          return time > 0 ? parseFloat(((p.score || 0) / time).toFixed(2)) : 0;
+        });
+        const capturesData = flyingTractorsPlayers.map(p => p.captures || 0);
+        const returnsData = flyingTractorsPlayers.map(p => p.returns || 0);
+        
+        // Create container with charts and table
+        container.innerHTML = `
+          <div class="space-y-6">
+            <!-- Charts Section -->
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="bg-black/60 border border-zinc-700/60 rounded-xl p-4">
+                <h3 class="text-lg font-semibold mb-3">Kills Per Minute</h3>
+                <canvas id="kpmChart" style="max-height: 300px;"></canvas>
+              </div>
+              <div class="bg-black/60 border border-zinc-700/60 rounded-xl p-4">
+                <h3 class="text-lg font-semibold mb-3">Score Per Minute</h3>
+                <canvas id="spmChart" style="max-height: 300px;"></canvas>
+              </div>
+              <div class="bg-black/60 border border-zinc-700/60 rounded-xl p-4">
+                <h3 class="text-lg font-semibold mb-3">Total Kills</h3>
+                <canvas id="killsChart" style="max-height: 300px;"></canvas>
+              </div>
+              <div class="bg-black/60 border border-zinc-700/60 rounded-xl p-4">
+                <h3 class="text-lg font-semibold mb-3">Flag Captures & Returns</h3>
+                <canvas id="flagChart" style="max-height: 300px;"></canvas>
+              </div>
+            </div>
+            
+            <!-- Stats Table -->
+            <div class="bg-black/60 border border-zinc-700/60 rounded-xl p-4 overflow-x-auto">
+              <h3 class="text-lg font-semibold mb-3">Detailed Statistics</h3>
+              <table class="w-full border-collapse">
+                <thead>
+                  <tr class="border-b border-zinc-700/60">
+                    <th class="text-left p-3 font-semibold">Player</th>
+                    <th class="text-right p-3 font-semibold">Matches</th>
+                    <th class="text-right p-3 font-semibold">Kills</th>
+                    <th class="text-right p-3 font-semibold">Assists</th>
+                    <th class="text-right p-3 font-semibold">Score</th>
+                    <th class="text-right p-3 font-semibold">Captures</th>
+                    <th class="text-right p-3 font-semibold">Returns</th>
+                    <th class="text-right p-3 font-semibold">KPM</th>
+                    <th class="text-right p-3 font-semibold">SPM</th>
+                  </tr>
+                </thead>
+                <tbody id="statsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        
+        const tbody = document.getElementById('statsTableBody');
+        flyingTractorsPlayers.forEach((player) => {
+          const kills = player.kills || 0;
+          const assists = player.assists || 0;
+          const score = player.score || 0;
+          const captures = player.captures || 0;
+          const returns = player.returns || 0;
+          const time = player.time || 0; // in minutes
+          const matches = player.matches || 0;
+          
+          const kpm = time > 0 ? (kills / time).toFixed(2) : '0.00';
+          const spm = time > 0 ? (score / time).toFixed(2) : '0.00';
+          
+          const row = document.createElement('tr');
+          row.className = 'border-b border-zinc-700/30 hover:bg-white/5 transition';
+          row.innerHTML = `
+            <td class="p-3 font-semibold">${player.name || 'Unknown'}</td>
+            <td class="p-3 text-right text-zinc-300">${matches.toLocaleString()}</td>
+            <td class="p-3 text-right text-zinc-300">${kills.toLocaleString()}</td>
+            <td class="p-3 text-right text-zinc-300">${assists.toLocaleString()}</td>
+            <td class="p-3 text-right text-zinc-300">${score.toLocaleString()}</td>
+            <td class="p-3 text-right text-emerald-400">${captures.toLocaleString()}</td>
+            <td class="p-3 text-right text-emerald-400">${returns.toLocaleString()}</td>
+            <td class="p-3 text-right ${parseFloat(kpm) >= 1.0 ? 'text-emerald-400' : 'text-zinc-300'} font-semibold">${kpm}</td>
+            <td class="p-3 text-right ${parseFloat(spm) >= 10 ? 'text-emerald-400' : 'text-zinc-300'} font-semibold">${spm}</td>
+          `;
+          tbody.appendChild(row);
+        });
+        
+        // Create charts
+        const chartOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#d4d4d8' }
+            }
+          },
+          scales: {
+            x: { ticks: { color: '#d4d4d8' }, grid: { color: 'rgba(212,212,216,0.1)' } },
+            y: { ticks: { color: '#d4d4d8' }, grid: { color: 'rgba(212,212,216,0.1)' } }
+          }
+        };
+        
+        // KPM Chart
+        new Chart(document.getElementById('kpmChart'), {
+          type: 'bar',
+          data: {
+            labels: playerNames,
+            datasets: [{
+              label: 'Kills Per Minute',
+              data: kpmData,
+              backgroundColor: 'rgba(16, 185, 129, 0.6)',
+              borderColor: 'rgba(16, 185, 129, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: chartOptions
+        });
+        
+        // SPM Chart
+        new Chart(document.getElementById('spmChart'), {
+          type: 'bar',
+          data: {
+            labels: playerNames,
+            datasets: [{
+              label: 'Score Per Minute',
+              data: spmData,
+              backgroundColor: 'rgba(16, 185, 129, 0.6)',
+              borderColor: 'rgba(16, 185, 129, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: chartOptions
+        });
+        
+        // Kills Chart
+        new Chart(document.getElementById('killsChart'), {
+          type: 'bar',
+          data: {
+            labels: playerNames,
+            datasets: [{
+              label: 'Total Kills',
+              data: killsData,
+              backgroundColor: 'rgba(16, 185, 129, 0.6)',
+              borderColor: 'rgba(16, 185, 129, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: chartOptions
+        });
+        
+        // Flag Captures & Returns Chart
+        new Chart(document.getElementById('flagChart'), {
+          type: 'bar',
+          data: {
+            labels: playerNames,
+            datasets: [
+              {
+                label: 'Captures',
+                data: capturesData,
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 1
+              },
+              {
+                label: 'Returns',
+                data: returnsData,
+                backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                borderColor: 'rgba(34, 197, 94, 1)',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: chartOptions
+        });
+      } catch (error) {
+        console.error('Error loading player stats:', error);
+        container.innerHTML = '<div class="text-center text-red-400 py-8">Error loading player stats: ' + error.message + '</div>';
       }
     }
 
@@ -378,6 +658,7 @@
     loadVideos();
     loadStreams();
     loadRoster();
+    loadPlayerStats();
   </script>
 </body>
 </html>
