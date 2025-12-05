@@ -1,0 +1,213 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.uid in ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'A2ZV8vziNsXqZkyqHzAB266B9pP2', 'nIwPwmmfqsYjCtD6oTF29EE9AwL2'];
+    }
+
+    match /streamers/{streamerId} {
+      allow read: if resource.data.approved == true || isAdmin();
+      allow create: if request.resource.data.approved == false
+        && request.resource.data.displayName is string
+        && request.resource.data.twitchHandle is string
+        && (!('team' in request.resource.data) || request.resource.data.team is string)
+        && (!('bio' in request.resource.data) || request.resource.data.bio is string)
+        && (!('avatarUrl' in request.resource.data) || request.resource.data.avatarUrl is string);
+      allow update, delete: if isAdmin();
+    }
+
+    match /teams/{teamId} {
+      allow read: if resource.data.approved == true || isAdmin();
+      allow create: if request.resource.data.approved == false &&
+        request.resource.data.teamName is string &&
+        request.resource.data.teamTag is string &&
+        request.resource.data.season is int &&
+        request.resource.data.division is string &&
+        request.resource.data.division in ['TPL-O', 'TPL-IM', 'TPL-I'] &&
+        request.resource.data.players is list &&
+        request.resource.data.benchPlayers is list;
+      allow update, delete: if isAdmin();
+    }
+
+    match /news/{newsId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /leagueSeasons/{seasonId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /leagueSchedules/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /publicStats/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /pendingMatches/{pendingId} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.team1 is string &&
+        request.resource.data.team2 is string &&
+        request.resource.data.map is string &&
+        request.resource.data.stats is map &&
+        request.resource.data.submittedBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Ladder system rules (consolidated - removed duplicates)
+    match /ladder/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /ladderMatches/{matchId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /ladderReports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && 
+        (resource.data.submittedBy == request.auth.token.email ||
+         resource.data.confirmedBy == request.auth.token.email ||
+         resource.data.disputedBy == request.auth.token.email) ||
+        isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /matchPolls/{pollId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /matchVotes/{pollId}/votes/{userId} {
+      allow read: if true;
+      allow create, update: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.data.team in ['A', 'B'] &&
+        request.resource.data.keys().hasOnly(['team', 'createdAt', 'updatedAt']);
+    }
+
+    match /admin/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /playerTwitchHandles/{handleId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // TWL Multi-Game Stream Viewer Collections (separate from TPL data)
+    match /twl_teams/{teamId} {
+      allow read: if true;
+      allow create: if request.resource.data.teamName is string;
+      allow update, delete: if true; // Open for demo/pitch - restrict to isAdmin() in production
+    }
+
+    match /twl_streamers/{streamerId} {
+      allow read: if true;
+      allow create: if request.resource.data.displayName is string 
+        && request.resource.data.twitchHandle is string;
+      allow update, delete: if true; // Open for demo/pitch - restrict to isAdmin() in production
+    }
+
+    // Visitor counter stats
+    match /site_stats/{docId} {
+      allow read: if true;
+      allow create: if true; // Allow anyone to create (first visitor)
+      allow update: if true; // Allow anyone to update (increment counter)
+    }
+
+    // Home League System Rules
+    match /homeLeague/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /homeLeagueTeams/{teamId} {
+      allow read: if true;
+      allow create: if request.auth != null &&
+        request.resource.data.teamName is string &&
+        request.resource.data.teamTag is string &&
+        request.resource.data.elo == 1500 &&
+        request.resource.data.wins == 0 &&
+        request.resource.data.losses == 0 &&
+        request.resource.data.mapsWon == 0 &&
+        request.resource.data.mapsLost == 0 &&
+        request.resource.data.last5 == '' &&
+        request.resource.data.players is list &&
+        request.resource.data.benchPlayers is list;
+      allow update, delete: if isAdmin();
+    }
+
+    match /homeLeagueMatches/{matchId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /homeLeagueReports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null &&
+        request.resource.data.matchId is string &&
+        request.resource.data.submittedByTeamId is string &&
+        request.resource.data.declaredWinnerTeamId is string &&
+        request.resource.data.perMapScores is list &&
+        request.resource.data.submittedBy == request.auth.token.email;
+      allow update: if request.auth != null && (
+        resource.data.submittedBy == request.auth.token.email ||
+        resource.data.confirmedBy == request.auth.token.email ||
+        resource.data.disputedBy == request.auth.token.email
+      ) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /homeLeagueStats/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /homeLeaguePendingMatches/{pendingId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.team1 is string &&
+        request.resource.data.team2 is string &&
+        request.resource.data.map is string &&
+        request.resource.data.stats is map &&
+        request.resource.data.submittedBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Flying Tractors Team Website Collections
+    match /featuredVideos/{videoId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /teamStreams/{streamId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /teamRoster/{memberId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
+

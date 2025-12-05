@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Initialize Firestore — Flying Tractors</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.initData = async function() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const status = document.getElementById('status');
+      
+      try {
+        // Login first
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        if (userCredential.user.uid !== 'nIwPwmmfqsYjCtD6oTF29EE9AwL2') {
+          throw new Error('Unauthorized');
+        }
+        
+        status.textContent = 'Logged in. Initializing data...';
+        
+        // Initialize Featured Videos
+        const videos = [
+          { url: 'KECIGdkH0Sg', title: 'Featured Video 1', order: 0 },
+          { url: 'zNovTE56lNQ', title: 'Featured Video 2', order: 1 },
+          { url: 'Lj1ByqBFGio', title: 'Featured Video 3', order: 2 }
+        ];
+        
+        for (const video of videos) {
+          await addDoc(collection(db, 'featuredVideos'), video);
+        }
+        status.textContent += '\n✓ Videos initialized';
+        
+        // Initialize Team Streams
+        const streams = [
+          { name: 'Mikeax2', channel: 'mikeax2', twitchUrl: 'https://www.twitch.tv/mikeax2' },
+          { name: 'nato', channel: 'natopotato262', twitchUrl: 'https://www.twitch.tv/natopotato262' },
+          { name: 'Playb0x', channel: 'playb0x', twitchUrl: 'https://www.twitch.tv/playb0x' }
+        ];
+        
+        for (const stream of streams) {
+          await addDoc(collection(db, 'teamStreams'), stream);
+        }
+        status.textContent += '\n✓ Streams initialized';
+        
+        // Initialize Team Roster
+        const roster = [
+          { name: 'Playb0x', role: 'Captain', twitchUrl: 'https://www.twitch.tv/playb0x' },
+          { name: 'Bizow', role: 'Core Member', twitchUrl: '' },
+          { name: 'Zao', role: 'Core Member', twitchUrl: '' },
+          { name: 'Dreadtitan', role: 'Core Member', twitchUrl: '' },
+          { name: 'nato', role: 'Core Member', twitchUrl: 'https://www.twitch.tv/natopotato262' },
+          { name: 'LightningMcMeme', role: 'Core Member', twitchUrl: '' },
+          { name: 'Orvid', role: 'Core Member', twitchUrl: '' },
+          { name: 'Bazz-B', role: 'Core Member', twitchUrl: '' },
+          { name: 'Mikeax2', role: 'Core Member', twitchUrl: 'https://www.twitch.tv/mikeax2' }
+        ];
+        
+        for (const member of roster) {
+          await addDoc(collection(db, 'teamRoster'), member);
+        }
+        status.textContent += '\n✓ Roster initialized';
+        status.textContent += '\n\n✅ All data initialized successfully!';
+        status.classList.remove('text-red-400');
+        status.classList.add('text-emerald-400');
+      } catch (error) {
+        status.textContent = 'Error: ' + error.message;
+        status.classList.remove('text-emerald-400');
+        status.classList.add('text-red-400');
+      }
+    };
+  </script>
+  <style>
+    .glass { backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(8,12,10,.7), rgba(8,12,10,.35)); }
+  </style>
+</head>
+<body class="bg-brand-dark text-zinc-100 min-h-screen flex items-center justify-center" style="background: #0b0f14;">
+  <div class="glass border border-zinc-700/50 rounded-xl p-8 max-w-md w-full mx-4 shadow-lg">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-extrabold mb-2">Initialize Firestore</h1>
+      <p class="text-zinc-400 text-sm">This will populate the database with current data</p>
+    </div>
+    
+    <div class="space-y-4">
+      <div>
+        <label for="email" class="block text-sm font-medium mb-2">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          class="w-full px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+          value="FTadmin@FTadmin"
+        />
+      </div>
+      
+      <div>
+        <label for="password" class="block text-sm font-medium mb-2">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          class="w-full px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+        />
+      </div>
+      
+      <button 
+        onclick="window.initData()"
+        class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg transition"
+      >
+        Initialize Database
+      </button>
+      
+      <pre id="status" class="text-sm text-zinc-400 whitespace-pre-wrap bg-black/40 p-4 rounded-lg min-h-[100px]"></pre>
+    </div>
+    
+    <div class="mt-6 text-center">
+      <a href="index.html" class="text-emerald-400 hover:underline text-sm">Back to Home</a>
+    </div>
+  </div>
+</body>
+</html>
+

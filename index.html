@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flying Tractors [^T^] — Tribes 3: Rivals</title>
+  <meta name="description" content="Flying Tractors [^T^] — TRIBES 3: Rivals team. Highlights, streams, roster, and more." />
+  <meta property="og:title" content="Flying Tractors [^T^]" />
+  <meta property="og:description" content="Highlights, streams, roster, and results." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/T24085/Team-FT/main/FTlogo.png" />
+  <meta name="theme-color" content="#166534" />
+
+  <!-- CSP: allow Tailwind CDN, Twitch, YouTube, and Firebase. Adjust if you self-host assets. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; frame-src https://player.twitch.tv https://www.youtube-nocookie.com https://www.youtube.com; style-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com https://www.gstatic.com 'unsafe-inline' 'unsafe-eval'; connect-src https://*.firebaseio.com https://*.googleapis.com">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              green: '#166534',
+              green2: '#15803d',
+              metal: '#d4d4d8',
+              dark: '#0b0f14',
+            }
+          },
+          boxShadow: { card: '0 14px 40px rgba(0,0,0,.35)' },
+          borderRadius: { xl2: '1.25rem' }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* logo background - larger and more visible */
+    .bg-tractor {
+      background:
+        linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.4)),
+        radial-gradient(1200px 400px at 50% -10%, rgba(21,128,61,.22), transparent 60%),
+        radial-gradient(1200px 500px at 40% 110%, rgba(21,128,61,.12), transparent 60%),
+        url('FTlogo.png') center / 400px repeat;
+    }
+    .bg-video-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      width: 100%;
+      height: 100%;
+    }
+    .bg-video-tile {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.9;
+    }
+    .glass { backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(8,12,10,.7), rgba(8,12,10,.35)); }
+    .embed { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 14px; border: 1px solid rgba(212,212,216,.4); background:#000; }
+    .embed iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+    .reveal { opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce){ .reveal{opacity:1; transform:none} }
+  </style>
+</head>
+<body class="bg-brand-dark text-zinc-100 min-h-screen selection:bg-emerald-700/40 selection:text-white">
+  <a class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:bg-emerald-700 focus:text-white focus:px-3 focus:py-2 focus:rounded-md" href="#main">Skip to content</a>
+
+  <!-- Background -->
+  <div class="fixed inset-0 -z-10 bg-video-grid">
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+    <video class="bg-video-tile" autoplay muted loop playsinline><source src="FTBackground.mp4" type="video/mp4"></video>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 glass border-b border-zinc-700/50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+      <a href="#home" class="flex items-center gap-3">
+        <video class="w-14 h-14 rounded-xl border border-brand-metal/60 object-cover" autoplay muted loop playsinline>
+          <source src="FTBackground.mp4" type="video/mp4">
+        </video>
+        <div class="font-extrabold tracking-tight">Flying Tractors <span class="text-emerald-400">[^T^]</span></div>
+      </a>
+
+      <button class="ml-auto md:hidden border border-zinc-600/60 rounded-lg px-3 py-1.5" aria-controls="site-nav" aria-expanded="false" id="navToggle">Menu</button>
+      <nav id="site-nav" class="hidden md:block md:ml-auto" aria-label="Primary">
+        <ul class="flex items-center gap-4 text-zinc-300 font-semibold">
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20 aria-[current=true]:bg-emerald-700/30" href="#home">Home</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#videos">Featured Videos</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#streams">Streams</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#roster">Roster</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20" href="#about">About</a></li>
+          <li><a class="px-3 py-2 rounded-lg hover:bg-emerald-700/20 text-emerald-400" href="login.html">Admin</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="max-w-6xl mx-auto px-4">
+    <!-- HERO -->
+    <section id="home" class="reveal py-16 md:py-20">
+      <div class="grid md:grid-cols-2 gap-6 items-center">
+        <div class="bg-black/60 border border-zinc-600/60 rounded-xl p-6 backdrop-blur-sm">
+          <h1 class="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg">
+            <span class="text-emerald-500">Welcome</span>
+            <span class="text-zinc-100">to</span>
+            <span class="text-zinc-300">Flying</span>
+            <span class="text-emerald-500">Tractors</span>
+          </h1>
+          <p class="mt-3 text-lg text-zinc-200/90">Plowing through the Wilderzone of <em>TRIBES 3: Rivals</em> with mechanical might and relentless drive, led by Captain <strong>Playb0x</strong>.</p>
+          <div class="mt-5 flex gap-3 flex-wrap">
+            <a href="https://store.steampowered.com/app/2687970/TRIBES_3_Rivals/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-5 py-3 rounded-xl border border-brand-metal/60 shadow-card">Play Tribes 3: Rivals</a>
+            <a href="#videos" class="inline-flex items-center gap-2 border border-zinc-600/70 hover:bg-white/5 px-5 py-3 rounded-xl">Watch Highlights</a>
+          </div>
+        </div>
+        <div class="rounded-xl overflow-hidden border border-zinc-600/60 shadow-card">
+          <video class="w-full h-full object-cover" autoplay muted loop playsinline>
+            <source src="HeroVideo.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIDEOS -->
+    <section id="videos" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-8">
+      <header class="flex items-end justify-between flex-wrap gap-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold">Featured Videos</h2>
+        <p class="text-zinc-300">A few of our favorite moments.</p>
+      </header>
+      <div id="videosContainer" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+        <!-- Videos will be loaded dynamically from Firestore -->
+        <div class="col-span-full text-center text-zinc-400 py-8">Loading videos...</div>
+      </div>
+    </section>
+
+    <!-- STREAMS -->
+    <section id="streams" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-8">
+      <header class="flex items-end justify-between flex-wrap gap-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold">Team Streams</h2>
+        <p class="text-zinc-300">Click a card to open Twitch in a new tab, or play inline below.</p>
+      </header>
+
+      <!-- Inline, lightweight stream players (auto-parent) -->
+      <div id="streamsContainer" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <!-- Streams will be loaded dynamically from Firestore -->
+        <div class="col-span-full text-center text-zinc-400 py-8">Loading streams...</div>
+      </div>
+    </section>
+
+    <!-- ROSTER -->
+    <section id="roster" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-8">
+      <header class="flex items-end justify-between flex-wrap gap-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold">Team Roster</h2>
+        <p class="text-zinc-300">Core lineup and roles.</p>
+      </header>
+      <div id="rosterContainer" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <!-- Roster will be loaded dynamically from Firestore -->
+        <div class="col-span-full text-center text-zinc-400 py-8">Loading roster...</div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="reveal bg-black/25 border border-zinc-700/50 rounded-xl p-5 md:p-7 shadow-card mb-14">
+      <h2 class="text-2xl md:text-3xl font-extrabold">About Flying Tractors</h2>
+      <p class="mt-2 text-zinc-200/90">Flying Tractors [^T^] is a relentless competitive team in <em>TRIBES 3: Rivals</em>, combining rugged power and strategic precision to dominate the battlefield. Led by Captain Playb0x, we plow through the Wilderzone with high‑octane aggression.</p>
+    </section>
+  </main>
+
+  <footer class="glass border-t border-zinc-700/50">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-center">
+      <p>© 2025 Flying Tractors [^T^]. All rights reserved.</p>
+      <p class="mt-1">Follow us on <a class="text-emerald-400 hover:underline" href="https://x.com/FlyingTractors" target="_blank" rel="noopener noreferrer">@FlyingTractors</a></p>
+      <p class="mt-2"><a href="login.html" class="text-emerald-400 hover:text-emerald-300 text-sm font-medium">Admin Login</a></p>
+    </div>
+  </footer>
+
+  <a href="#home" aria-label="Back to top" class="fixed right-4 bottom-4 hidden items-center justify-center w-11 h-11 rounded-full border border-zinc-600/60 bg-black/40 hover:bg-black/60 shadow-card" id="toTop">↑</a>
+
+  <script>
+    // Mobile nav
+    (function(){
+      const btn = document.getElementById('navToggle');
+      const nav = document.getElementById('site-nav');
+      if(!btn || !nav) return;
+      btn.addEventListener('click', ()=>{
+        const open = nav.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', String(!open));
+      });
+    })();
+
+    // Smooth scroll & simple scrollspy
+    (function(){
+      document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', e=>{
+          const id = a.getAttribute('href');
+          const el = document.querySelector(id);
+          if(!el) return;
+          e.preventDefault();
+          el.scrollIntoView({behavior:'smooth', block:'start'});
+        });
+      });
+      const sections = document.querySelectorAll('main section[id]');
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(entry=>{
+          const id = entry.target.id;
+          const link = document.querySelector(`header a[href="#${id}"]`);
+          if(link) link.setAttribute('aria-current', entry.isIntersecting ? 'true' : 'false');
+        });
+      }, { rootMargin: '-40% 0px -55% 0px', threshold: 0.05 });
+      sections.forEach(s=>io.observe(s));
+    })();
+
+    // Reveal on scroll
+    (function(){
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(prefersReduced) return;
+      const els = document.querySelectorAll('.reveal');
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+      }, {threshold: .1});
+      els.forEach(el=>io.observe(el));
+    })();
+
+    // Back to top visibility
+    (function(){
+      const btn = document.getElementById('toTop');
+      const onScroll = ()=>{ if(window.scrollY > 600) btn.classList.remove('hidden'); else btn.classList.add('hidden'); };
+      document.addEventListener('scroll', onScroll, {passive:true});
+      onScroll();
+    })();
+
+    // Twitch embeds — set parent to current domain at runtime
+    (function(){
+      const domain = location.hostname || 'localhost';
+      document.querySelectorAll('iframe[data-twitch-channel]').forEach((iframe)=>{
+        const channel = iframe.getAttribute('data-twitch-channel');
+        if(!channel) return;
+        const params = new URLSearchParams({ channel, parent: domain, muted: 'true' });
+        iframe.src = `https://player.twitch.tv/?${params.toString()}`;
+      });
+    })();
+  </script>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Load Featured Videos
+    async function loadVideos() {
+      const container = document.getElementById('videosContainer');
+      try {
+        const q = query(collection(db, 'featuredVideos'), orderBy('order', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          container.innerHTML = '<div class="col-span-full text-center text-zinc-400 py-8">No videos available.</div>';
+          return;
+        }
+        
+        container.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const video = doc.data();
+          const videoId = video.url.includes('youtube.com') || video.url.includes('youtu.be') 
+            ? extractYouTubeId(video.url) 
+            : video.url;
+          
+          const videoDiv = document.createElement('div');
+          videoDiv.className = 'embed';
+          videoDiv.innerHTML = `<iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${videoId}" title="${video.title || 'Featured video'}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+          container.appendChild(videoDiv);
+        });
+      } catch (error) {
+        console.error('Error loading videos:', error);
+        container.innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Error loading videos.</div>';
+      }
+    }
+
+    // Load Team Streams
+    async function loadStreams() {
+      const container = document.getElementById('streamsContainer');
+      const domain = location.hostname || 'localhost';
+      
+      try {
+        const q = query(collection(db, 'teamStreams'), orderBy('name', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          container.innerHTML = '<div class="col-span-full text-center text-zinc-400 py-8">No streams available.</div>';
+          return;
+        }
+        
+        container.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const stream = doc.data();
+          const streamDiv = document.createElement('article');
+          streamDiv.className = 'border border-zinc-700/60 rounded-xl p-4 hover:bg-white/5 transition';
+          streamDiv.innerHTML = `
+            <h3 class="font-semibold">${stream.name}</h3>
+            ${stream.twitchUrl ? `<a class="text-emerald-400 hover:underline" href="${stream.twitchUrl}" target="_blank" rel="noopener noreferrer">${stream.twitchUrl.replace('https://', '').replace('http://', '')}</a>` : ''}
+            <div class="embed mt-3"><iframe loading="lazy" data-twitch-channel="${stream.channel}" title="${stream.name} — Twitch player" allowfullscreen></iframe></div>
+          `;
+          container.appendChild(streamDiv);
+        });
+        
+        // Initialize Twitch embeds
+        setTimeout(() => {
+          document.querySelectorAll('iframe[data-twitch-channel]').forEach((iframe) => {
+            const channel = iframe.getAttribute('data-twitch-channel');
+            if (!channel) return;
+            const params = new URLSearchParams({ channel, parent: domain, muted: 'true' });
+            iframe.src = `https://player.twitch.tv/?${params.toString()}`;
+          });
+        }, 100);
+      } catch (error) {
+        console.error('Error loading streams:', error);
+        container.innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Error loading streams.</div>';
+      }
+    }
+
+    // Load Team Roster
+    async function loadRoster() {
+      const container = document.getElementById('rosterContainer');
+      
+      try {
+        const q = query(collection(db, 'teamRoster'), orderBy('name', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          container.innerHTML = '<div class="col-span-full text-center text-zinc-400 py-8">No roster members available.</div>';
+          return;
+        }
+        
+        container.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const member = doc.data();
+          const memberDiv = document.createElement('article');
+          memberDiv.className = 'border border-zinc-700/60 rounded-xl p-4';
+          memberDiv.innerHTML = `
+            <h3 class="text-lg font-semibold">${member.name}</h3>
+            <p class="text-emerald-400">${member.role}</p>
+            ${member.twitchUrl ? `<a class="text-emerald-400 hover:underline" href="${member.twitchUrl}" target="_blank" rel="noopener noreferrer">${member.twitchUrl.replace('https://', '').replace('http://', '')}</a>` : ''}
+          `;
+          container.appendChild(memberDiv);
+        });
+      } catch (error) {
+        console.error('Error loading roster:', error);
+        container.innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Error loading roster.</div>';
+      }
+    }
+
+    function extractYouTubeId(url) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : url;
+    }
+
+    // Load all data on page load
+    loadVideos();
+    loadStreams();
+    loadRoster();
+  </script>
+</body>
+</html>

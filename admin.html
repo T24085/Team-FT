@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel — Flying Tractors</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Check authentication
+    onAuthStateChanged(auth, (user) => {
+      if (!user || user.uid !== 'nIwPwmmfqsYjCtD6oTF29EE9AwL2') {
+        window.location.href = 'login.html';
+      } else {
+        loadData();
+      }
+    });
+
+    window.logout = async function() {
+      await signOut(auth);
+      localStorage.removeItem('adminToken');
+      window.location.href = 'login.html';
+    };
+
+    async function loadData() {
+      await loadVideos();
+      await loadStreams();
+      await loadRoster();
+    }
+
+    async function loadVideos() {
+      const videosContainer = document.getElementById('videosList');
+      videosContainer.innerHTML = '<p class="text-zinc-400">Loading...</p>';
+      
+      try {
+        const q = query(collection(db, 'featuredVideos'), orderBy('order', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          videosContainer.innerHTML = '<p class="text-zinc-400">No videos yet. Add one below.</p>';
+          return;
+        }
+        
+        videosContainer.innerHTML = '';
+        snapshot.forEach((docSnap) => {
+          const video = docSnap.data();
+          const videoDiv = document.createElement('div');
+          videoDiv.className = 'border border-zinc-700/60 rounded-lg p-4';
+          videoDiv.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <p class="font-semibold">${video.title || 'Untitled'}</p>
+                <p class="text-sm text-zinc-400">${video.url}</p>
+              </div>
+              <button onclick="deleteVideo('${docSnap.id}')" class="text-red-400 hover:text-red-300">Delete</button>
+            </div>
+          `;
+          videosContainer.appendChild(videoDiv);
+        });
+      } catch (error) {
+        videosContainer.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+      }
+    }
+
+    async function loadStreams() {
+      const streamsContainer = document.getElementById('streamsList');
+      streamsContainer.innerHTML = '<p class="text-zinc-400">Loading...</p>';
+      
+      try {
+        const q = query(collection(db, 'teamStreams'), orderBy('name', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          streamsContainer.innerHTML = '<p class="text-zinc-400">No streams yet. Add one below.</p>';
+          return;
+        }
+        
+        streamsContainer.innerHTML = '';
+        snapshot.forEach((docSnap) => {
+          const stream = docSnap.data();
+          const streamDiv = document.createElement('div');
+          streamDiv.className = 'border border-zinc-700/60 rounded-lg p-4';
+          streamDiv.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <p class="font-semibold">${stream.name}</p>
+                <p class="text-sm text-zinc-400">${stream.channel}</p>
+                ${stream.twitchUrl ? `<p class="text-sm text-emerald-400">${stream.twitchUrl}</p>` : ''}
+              </div>
+              <button onclick="deleteStream('${docSnap.id}')" class="text-red-400 hover:text-red-300">Delete</button>
+            </div>
+          `;
+          streamsContainer.appendChild(streamDiv);
+        });
+      } catch (error) {
+        streamsContainer.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+      }
+    }
+
+    async function loadRoster() {
+      const rosterContainer = document.getElementById('rosterList');
+      rosterContainer.innerHTML = '<p class="text-zinc-400">Loading...</p>';
+      
+      try {
+        const q = query(collection(db, 'teamRoster'), orderBy('name', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          rosterContainer.innerHTML = '<p class="text-zinc-400">No roster members yet. Add one below.</p>';
+          return;
+        }
+        
+        rosterContainer.innerHTML = '';
+        snapshot.forEach((docSnap) => {
+          const member = docSnap.data();
+          const memberDiv = document.createElement('div');
+          memberDiv.className = 'border border-zinc-700/60 rounded-lg p-4';
+          memberDiv.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <p class="font-semibold">${member.name}</p>
+                <p class="text-emerald-400">${member.role}</p>
+                ${member.twitchUrl ? `<p class="text-sm text-emerald-400">${member.twitchUrl}</p>` : ''}
+              </div>
+              <button onclick="deleteMember('${docSnap.id}')" class="text-red-400 hover:text-red-300">Delete</button>
+            </div>
+          `;
+          rosterContainer.appendChild(memberDiv);
+        });
+      } catch (error) {
+        rosterContainer.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+      }
+    }
+
+    window.addVideo = async function() {
+      const url = document.getElementById('videoUrl').value;
+      const title = document.getElementById('videoTitle').value;
+      const order = parseInt(document.getElementById('videoOrder').value) || 0;
+      
+      if (!url) {
+        alert('Please enter a video URL');
+        return;
+      }
+      
+      try {
+        await addDoc(collection(db, 'featuredVideos'), {
+          url: url,
+          title: title || 'Untitled Video',
+          order: order
+        });
+        document.getElementById('videoUrl').value = '';
+        document.getElementById('videoTitle').value = '';
+        document.getElementById('videoOrder').value = '';
+        await loadVideos();
+      } catch (error) {
+        alert('Error adding video: ' + error.message);
+      }
+    };
+
+    window.addStream = async function() {
+      const name = document.getElementById('streamName').value;
+      const channel = document.getElementById('streamChannel').value;
+      const twitchUrl = document.getElementById('streamTwitchUrl').value;
+      
+      if (!name || !channel) {
+        alert('Please enter name and channel');
+        return;
+      }
+      
+      try {
+        await addDoc(collection(db, 'teamStreams'), {
+          name: name,
+          channel: channel,
+          twitchUrl: twitchUrl || ''
+        });
+        document.getElementById('streamName').value = '';
+        document.getElementById('streamChannel').value = '';
+        document.getElementById('streamTwitchUrl').value = '';
+        await loadStreams();
+      } catch (error) {
+        alert('Error adding stream: ' + error.message);
+      }
+    };
+
+    window.addMember = async function() {
+      const name = document.getElementById('memberName').value;
+      const role = document.getElementById('memberRole').value;
+      const twitchUrl = document.getElementById('memberTwitchUrl').value;
+      
+      if (!name || !role) {
+        alert('Please enter name and role');
+        return;
+      }
+      
+      try {
+        await addDoc(collection(db, 'teamRoster'), {
+          name: name,
+          role: role,
+          twitchUrl: twitchUrl || ''
+        });
+        document.getElementById('memberName').value = '';
+        document.getElementById('memberRole').value = '';
+        document.getElementById('memberTwitchUrl').value = '';
+        await loadRoster();
+      } catch (error) {
+        alert('Error adding member: ' + error.message);
+      }
+    };
+
+    window.deleteVideo = async function(id) {
+      if (!confirm('Delete this video?')) return;
+      try {
+        await deleteDoc(doc(db, 'featuredVideos', id));
+        await loadVideos();
+      } catch (error) {
+        alert('Error deleting video: ' + error.message);
+      }
+    };
+
+    window.deleteStream = async function(id) {
+      if (!confirm('Delete this stream?')) return;
+      try {
+        await deleteDoc(doc(db, 'teamStreams', id));
+        await loadStreams();
+      } catch (error) {
+        alert('Error deleting stream: ' + error.message);
+      }
+    };
+
+    window.deleteMember = async function(id) {
+      if (!confirm('Delete this member?')) return;
+      try {
+        await deleteDoc(doc(db, 'teamRoster', id));
+        await loadRoster();
+      } catch (error) {
+        alert('Error deleting member: ' + error.message);
+      }
+    };
+  </script>
+  <style>
+    .glass { backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(8,12,10,.7), rgba(8,12,10,.35)); }
+  </style>
+</head>
+<body class="bg-brand-dark text-zinc-100 min-h-screen" style="background: #0b0f14;">
+  <header class="glass border-b border-zinc-700/50 sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-2xl font-extrabold">Admin Panel <span class="text-emerald-400">[^T^]</span></h1>
+      <div class="flex gap-4">
+        <a href="index.html" class="px-4 py-2 border border-zinc-600/60 rounded-lg hover:bg-white/5">View Site</a>
+        <button onclick="window.logout()" class="px-4 py-2 bg-red-700 hover:bg-red-600 rounded-lg">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Featured Videos Section -->
+    <section class="glass border border-zinc-700/50 rounded-xl p-6 mb-8">
+      <h2 class="text-2xl font-extrabold mb-4">Featured Videos</h2>
+      
+      <div id="videosList" class="mb-4 space-y-2"></div>
+      
+      <div class="border-t border-zinc-700/50 pt-4 mt-4">
+        <h3 class="font-semibold mb-3">Add New Video</h3>
+        <div class="grid md:grid-cols-3 gap-3">
+          <input type="text" id="videoTitle" placeholder="Video Title" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="text" id="videoUrl" placeholder="YouTube URL (e.g., KECIGdkH0Sg)" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <div class="flex gap-2">
+            <input type="number" id="videoOrder" placeholder="Order" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg flex-1" />
+            <button onclick="window.addVideo()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 rounded-lg">Add</button>
+          </div>
+        </div>
+        <p class="text-sm text-zinc-400 mt-2">Enter just the video ID from YouTube URL (e.g., "KECIGdkH0Sg" from youtube.com/watch?v=KECIGdkH0Sg)</p>
+      </div>
+    </section>
+
+    <!-- Team Streams Section -->
+    <section class="glass border border-zinc-700/50 rounded-xl p-6 mb-8">
+      <h2 class="text-2xl font-extrabold mb-4">Team Streams</h2>
+      
+      <div id="streamsList" class="mb-4 space-y-2"></div>
+      
+      <div class="border-t border-zinc-700/50 pt-4 mt-4">
+        <h3 class="font-semibold mb-3">Add New Stream</h3>
+        <div class="grid md:grid-cols-4 gap-3">
+          <input type="text" id="streamName" placeholder="Name" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="text" id="streamChannel" placeholder="Twitch Channel" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="text" id="streamTwitchUrl" placeholder="Twitch URL (optional)" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <button onclick="window.addStream()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 rounded-lg">Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Roster Section -->
+    <section class="glass border border-zinc-700/50 rounded-xl p-6 mb-8">
+      <h2 class="text-2xl font-extrabold mb-4">Team Roster</h2>
+      
+      <div id="rosterList" class="mb-4 space-y-2"></div>
+      
+      <div class="border-t border-zinc-700/50 pt-4 mt-4">
+        <h3 class="font-semibold mb-3">Add New Member</h3>
+        <div class="grid md:grid-cols-4 gap-3">
+          <input type="text" id="memberName" placeholder="Name" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="text" id="memberRole" placeholder="Role (e.g., Captain, Core Member)" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <input type="text" id="memberTwitchUrl" placeholder="Twitch URL (optional)" class="px-4 py-2 bg-black/40 border border-zinc-600/60 rounded-lg" />
+          <button onclick="window.addMember()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 rounded-lg">Add</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
+
